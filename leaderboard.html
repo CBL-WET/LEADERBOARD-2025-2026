@@ -289,6 +289,7 @@
             text-align: center;
             margin-right: 20px;
             color: #8a95b8;
+            display: none; /* To re-enable, change to: display: flex; */
         }
 
         .rank.rank-1 {
@@ -393,6 +394,8 @@
             min-width: 60px;
             text-align: right;
             margin-right: 8px;
+            filter: blur(8px);
+            user-select: none;
         }
 
         .score-label {
@@ -653,6 +656,16 @@
             modal.classList.remove('active');
         }
 
+        function shuffleArray(array) {
+            // Fisher-Yates shuffle algorithm
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
         function renderLeaderboard(teams) {
             const leaderboard = document.getElementById('leaderboard');
             leaderboard.innerHTML = '';
@@ -709,7 +722,9 @@
                 const listContainer = document.createElement('div');
                 listContainer.style.borderRadius = '0 0 15px 15px';
                 
-                teams.slice(3).forEach((team, index) => {
+                // Randomize the order of non-podium teams
+                const shuffledTeams = shuffleArray(teams.slice(3));
+                shuffledTeams.forEach((team, index) => {
                     const rank = index + 4;
                     const item = document.createElement('div');
                     item.className = 'leaderboard-item';
