@@ -738,10 +738,10 @@
                             <div class="badges">${badgesHTML}</div>
                         </div>
                         <div class="score">
-                            ${team.score.toLocaleString()}
+                            ?
                             <span class="score-label">WET</span>
                         </div>
-                    `;
+                    `; // replace ? by ${team.score.toLocaleString()}
 
                     item.addEventListener('click', () => showBadgeModal(team.name, team.badges));
                     listContainer.appendChild(item);
