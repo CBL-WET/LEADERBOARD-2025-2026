@@ -40,6 +40,26 @@
             opacity: 0.7;
         }
 
+        .login-button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #ffd700; /* Bright gold color */
+            color: #000; /* Black text for contrast */
+            border: 2px solid #fff;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: background 0.3s ease;
+            z-index: 1000;
+        }
+
+        .login-button:hover {
+            background: #ffed4e; /* Lighter gold on hover */
+        }
+
         .podium-section {
             background: rgba(30, 35, 50, 0.5);
             border-radius: 15px 15px 0 0;
@@ -456,6 +476,111 @@
         .leaderboard-item .score {
             filter: blur(10px);
         }
+
+        /* Mobile responsiveness */
+        @media (max-width: 767px) {
+            .container {
+                padding: 20px 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .header p {
+                font-size: 1em;
+            }
+
+            .login-button {
+                font-size: 0.8em;
+                padding: 6px 12px;
+            }
+
+            .podium-section {
+                padding: 20px 10px;
+                gap: 10px;
+            }
+
+            .pedestal {
+                max-width: 150px;
+            }
+
+            .pedestal-info {
+                padding: 15px;
+            }
+
+            .pedestal-name {
+                font-size: clamp(0.8em, 1.2vw, 1em);
+            }
+
+            .pedestal-score {
+                font-size: 1.4em;
+            }
+
+            .leaderboard-item {
+                padding: 15px 20px;
+            }
+
+            .rank {
+                font-size: 1.2em;
+                width: 40px;
+            }
+
+            .team-name {
+                font-size: 1.1em;
+            }
+
+            .score {
+                font-size: 1.4em;
+                min-width: 50px;
+            }
+
+            .badge, .badge-overflow {
+                width: 40px;
+                height: 40px;
+                border-radius: 25%;
+            }
+
+            .badge-overlay {
+                font-size: 8px;
+                top: 2px;
+                right: 4px;
+            }
+
+            .badge-wrapper:hover::after {
+                font-size: 0.8em;
+                padding: 4px 8px;
+            }
+
+            .modal-content {
+                padding: 20px;
+                max-width: 90%;
+            }
+
+            .modal-title {
+                font-size: 1.3em;
+            }
+
+            .modal-badges {
+                grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+                gap: 10px;
+            }
+
+            .modal-badge-img {
+                width: 50px;
+                height: 50px;
+            }
+
+            .modal-badge-overlay {
+                font-size: 10px;
+                top: 3px;
+                right: 6px;
+            }
+
+            .modal-badge-label {
+                font-size: 0.8em;
+            }
+        }
     </style>
 </head>
 <body>
@@ -463,6 +588,7 @@
         <div class="header">
             <h1><b>5XWF0</b> Wireless Energy Transfer: Team Leaderboard</h1>
             <p>Live Rankings & Achievements</p>
+            <button class="login-button" id="loginButton">Login</button>
         </div>
 
         <div class="leaderboard" id="leaderboard"></div>
@@ -472,6 +598,17 @@
                 <button class="modal-close" id="modalClose">&times;</button>
                 <div class="modal-title" id="modalTitle"></div>
                 <div class="modal-badges" id="modalBadges"></div>
+            </div>
+        </div>
+
+        <div class="modal" id="loginModal">
+            <div class="modal-content">
+                <button class="modal-close" id="loginModalClose">&times;</button>
+                <div class="modal-title">Team Login</div>
+                <div class="login-form">
+                    <input type="password" id="passkeyInput" placeholder="Enter passkey" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid rgba(180, 190, 220, 0.2); border-radius: 5px; background: rgba(30, 35, 50, 0.5); color: #e8eef5;">
+                    <button id="loginSubmit" style="width: 100%; padding: 10px; background: rgba(100, 110, 130, 0.3); color: #e8eef5; border: 1px solid rgba(180, 190, 220, 0.2); border-radius: 5px; cursor: pointer;">Login</button>
+                </div>
             </div>
         </div>
 
@@ -489,10 +626,15 @@
         // 3. Get the Sheet ID from the URL (between /d/ and /edit)
         // 4. Use this format: https://docs.google.com/spreadsheets/d/SHEET_ID/export?format=csv
         
-        // Get spreadsheet ID from URL parameter (required)
+        // Get spreadsheet ID and password GID from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const spreadsheetId = urlParams.get('spreadsheet');
+        const passwordGid = urlParams.get('gid');
         const GOOGLE_SHEET_URL = spreadsheetId ? `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv` : null;
+        const PASSWORD_URL = spreadsheetId && passwordGid ? `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${passwordGid}` : null;
+
+        let loggedInTeam = null;
+        let teamPasswords = new Map();
 
         // Badge image mapping (from Google Sheet)
         const badgeImages = {
@@ -588,11 +730,27 @@
             return teams.sort((a, b) => b.score - a.score);
         }
 
+        function parsePasswords(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) return new Map();
+
+            const passwords = new Map();
+            for (let i = 1; i < lines.length; i++) {
+                const parts = lines[i].split(',').map(p => p.trim());
+                if (parts.length >= 2) {
+                    const team = parts[0];
+                    const pass = parts[1];
+                    passwords.set(team, pass);
+                }
+            }
+            return passwords;
+        }
+
 
         function renderBadges(badges, isMobile = false, maxBadges = null) {
             let max = maxBadges;
             if (max === null) {
-                max = isMobile ? 2 : badges.length;
+                max = badges.length;  // Show all badges
             }
 
             if (badges.length <= max) {
@@ -686,6 +844,48 @@
             modal.classList.remove('active');
         }
 
+        function closeLoginModal() {
+            const modal = document.getElementById('loginModal');
+            modal.classList.remove('active');
+        }
+
+        function showLoginModal() {
+            const modal = document.getElementById('loginModal');
+            modal.classList.add('active');
+            document.getElementById('passkeyInput').focus();
+        }
+
+        function attemptLogin() {
+            const passkey = document.getElementById('passkeyInput').value.trim();
+            if (!passkey) return;
+
+            for (let [team, password] of teamPasswords) {
+                if (password === passkey) {
+                    loggedInTeam = team;
+                    closeLoginModal();
+                    document.getElementById('passkeyInput').value = '';
+                    unblurTeamScore(team);
+                    document.getElementById('loginButton').textContent = team;
+                    alert(`Logged in as ${team}`);
+                    return;
+                }
+            }
+            alert('Invalid passkey');
+        }
+
+        function unblurTeamScore(teamName) {
+            const items = document.querySelectorAll('.leaderboard-item');
+            items.forEach(item => {
+                const teamNameEl = item.querySelector('.team-name');
+                if (teamNameEl && teamNameEl.textContent === teamName) {
+                    const scoreEl = item.querySelector('.score');
+                    if (scoreEl) {
+                        scoreEl.style.filter = 'none';
+                    }
+                }
+            });
+        }
+
         function renderLeaderboard(teams) {
             const leaderboard = document.getElementById('leaderboard');
             leaderboard.innerHTML = '';
@@ -773,24 +973,27 @@
             // Check if spreadsheet ID was provided
             if (!GOOGLE_SHEET_URL) {
                 const leaderboard = document.getElementById('leaderboard');
-                leaderboard.innerHTML = `<div style="padding: 40px; text-align: center; color: #999;">No spreadsheet provided. Add ?spreadsheet=SHEET_ID to the URL.</div>`;
+                leaderboard.innerHTML = `<div style="padding: 40px; text-align: center; color: #999;">No spreadsheet provided. Add ?spreadsheet=SHEET_ID&gid=PASSWORD_GID to the URL.</div>`;
                 return;
             }
 
             // Fetch CSV from Google Sheet
-            fetch(GOOGLE_SHEET_URL)
-                .then(response => response.text())
-                .then(csvText => {
-                    const teams = parseTeams(csvText);
-                    renderLeaderboard(teams);
-                })
-                .catch(error => {
-                    console.error('Error fetching leaderboard data:', error);
-                    const leaderboard = document.getElementById('leaderboard');
-                    leaderboard.innerHTML = `<div style="padding: 40px; text-align: center; color: #e74c3c;">
-                        Error loading data. Check console and verify the Google Sheet URL is correct and public.
-                    </div>`;
-                });
+            Promise.all([
+                fetch(GOOGLE_SHEET_URL).then(response => response.text()),
+                PASSWORD_URL ? fetch(PASSWORD_URL).then(response => response.text()) : Promise.resolve('')
+            ])
+            .then(([csvText, passwordCsv]) => {
+                const teams = parseTeams(csvText);
+                teamPasswords = parsePasswords(passwordCsv);
+                renderLeaderboard(teams);
+            })
+            .catch(error => {
+                console.error('Error fetching leaderboard data:', error);
+                const leaderboard = document.getElementById('leaderboard');
+                leaderboard.innerHTML = `<div style="padding: 40px; text-align: center; color: #e74c3c;">
+                    Error loading data. Check console and verify the Google Sheet URL is correct and public.
+                </div>`;
+            });
 
             // Update timestamp
             const now = new Date();
@@ -813,7 +1016,42 @@
                     }
                 });
             }
-            
+
+            // Login modal
+            const loginButton = document.getElementById('loginButton');
+            const loginModalClose = document.getElementById('loginModalClose');
+            const loginModal = document.getElementById('loginModal');
+            const loginSubmit = document.getElementById('loginSubmit');
+            const passkeyInput = document.getElementById('passkeyInput');
+
+            if (loginButton) {
+                loginButton.addEventListener('click', showLoginModal);
+            }
+
+            if (loginModalClose) {
+                loginModalClose.addEventListener('click', closeLoginModal);
+            }
+
+            if (loginModal) {
+                loginModal.addEventListener('click', (e) => {
+                    if (e.target === loginModal) {
+                        closeLoginModal();
+                    }
+                });
+            }
+
+            if (loginSubmit) {
+                loginSubmit.addEventListener('click', attemptLogin);
+            }
+
+            if (passkeyInput) {
+                passkeyInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        attemptLogin();
+                    }
+                });
+            }
+
             initLeaderboard();
         });
 
