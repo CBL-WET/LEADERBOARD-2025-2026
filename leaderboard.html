@@ -289,7 +289,6 @@
             text-align: center;
             margin-right: 20px;
             color: #8a95b8;
-            display: none; /* To re-enable, change to: display: flex; */
         }
 
         .rank.rank-1 {
@@ -394,8 +393,6 @@
             min-width: 60px;
             text-align: right;
             margin-right: 8px;
-            filter: blur(8px);
-            user-select: none;
         }
 
         .score-label {
@@ -417,86 +414,47 @@
             opacity: 0.8;
         }
 
-        @media (max-width: 600px) {
-            .header h1 {
-                font-size: 2em;
-            }
+        .badge-glow-i {
+            filter: drop-shadow(0 0 12px rgba(205, 127, 50, 1.0)); /* bronze glow */
+        }
 
-            .podium-section {
-                min-height: 300px;
-                padding: 30px 10px 15px;
-                gap: 10px;
-            }
+        .badge-glow-ii {
+            filter: drop-shadow(0 0 12px rgba(192, 192, 192, 1.0)); /* silver glow */
+        }
 
-            .pedestal {
-                max-width: 100%;
-            }
+        .badge-glow-iii {
+            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 1.0)); /* gold glow */
+        }
 
-            .pedestal-info {
-                padding: 12px;
-            }
+        .badge-overlay {
+            position: absolute;
+            top: 3px;
+            right: 6px;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none;
+        }
 
-            .pedestal-rank {
-                font-size: 2em;
-                margin: 5px 0;
-            }
+        .modal-badge-img-container {
+            position: relative;
+            display: inline-block;
+        }
 
-            .pedestal-name {
-                font-size: 0.85em;
-                margin-bottom: 5px;
-                word-break: break-word;
-            }
+        .modal-badge-overlay {
+            position: absolute;
+            top: 5px;
+            right: 10px;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none;
+        }
 
-            .pedestal-score {
-                font-size: 1.3em;
-                margin-top: 5px;
-            }
-
-            .pedestal-base {
-                padding: 10px;
-                font-size: 0.85em;
-            }
-
-            .pedestal-badges {
-                gap: 3px;
-            }
-
-            .badge {
-                width: 35px;
-                height: 35px;
-                font-size: 0.7em;
-            }
-
-            .badges {
-                flex-wrap: nowrap;
-                max-width: auto;
-                overflow: hidden;
-            }
-
-            .badge-overflow {
-                width: 35px;
-                height: 35px;
-                font-size: 0.7em;
-            }
-
-            .leaderboard-item {
-                padding: 15px 20px;
-            }
-
-            .rank {
-                width: 40px;
-                margin-right: 15px;
-            }
-
-            .team-info {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .score {
-                text-align: left;
-                font-size: 1.5em;
-            }
+        .leaderboard-item .score {
+            filter: blur(10px);
         }
     </style>
 </head>
@@ -538,41 +496,69 @@
 
         // Badge image mapping (from Google Sheet)
         const badgeImages = {
-            '100w': 'Images/100w.png',
-            '200w': 'Images/200w.png',
-            'accuracy': 'Images/accuracy.png',
-            'camera': 'Images/camera.png',
-            'ic': 'Images/ic.png',
-            'highestpower': 'Images/highestpower.png',
-            'moneybag': 'Images/moneybag.png',
-            'phoenix': 'Images/phoenix.png',
-            'recycle': 'Images/recycle.png',
-            'sustainable': 'Images/sustainable.png',
-            'generator': 'Images/generator.png'
+            'warranty voider': 'Images/ic.png',
+            'wet with wet': 'Images/wetsystem.png',
+            'the golden tome': 'Images/workshops.png',
+            'outstanding solution award i': 'Images/bestchallenge.png',
+            'outstanding solution award ii': 'Images/bestchallenge.png',
+            'outstanding solution award iii': 'Images/bestchallenge.png',
+            'golden trace i': 'Images/goldentrace.png',
+            'golden trace ii': 'Images/goldentrace.png',
+            'golden trace iii': 'Images/goldentrace.png',
+            'design harmony i': 'Images/bestsetup.png',
+            'design harmony ii': 'Images/bestsetup.png',
+            'design harmony iii': 'Images/bestsetup.png',
+            'sweet spot seeker': 'Images/generator.png',
+            'load detection specialists': 'Images/loaddetect.png',
+            'sharpshooters i': 'Images/accuracy.png',
+            'sharpshooters ii': 'Images/accuracy.png',
+            'sharpshooters iii': 'Images/accuracy.png',
+            'top earner': 'Images/safe.png',
+            'high roller': 'Images/moneybag.png',
+            'sustainable innovators': 'Images/sustainable.png',
+            'adventurers i': 'Images/quests.png',
+            'adventurers ii': 'Images/quests.png',
+            'adventurers iii': 'Images/quests.png',
         };
 
         const badgeTooltips = {
-            '100w': 'Reached 100W',
-            '200w': 'Reached 200W',
-            'accuracy': 'Perfect Accuracy',
-            'camera': 'Best Team Picture',
-            'ic': 'Microcontroller Wizards',
-            'highestpower': 'Highest Power Output',
-            'moneybag': 'Spent the most WET',
-            'phoenix': 'Bounced Back from Zero',
-            'recycle': 'Recycling Champion',
-            'sustainable': 'Best Sustainable Design',
-            'generator': 'Generator Experts'
+            'warranty voider': 'Warranty Voider',
+            'wet with wet': 'WET with WET',
+            'the golden tome': 'The Golden Tome',
+            'outstanding solution award': 'Outstanding Solution Award',
+            'golden trace': 'Golden Trace',
+            'design harmony': 'Design Harmony',
+            'sweet spot seeker': 'Sweet Spot Seeker',
+            'load detection specialists': 'Load Detection Specialists',
+            'sharpshooters': 'Sharpshooters',
+            'top earner': 'Top Earner',
+            'high roller': 'High Roller',
+            'sustainable innovators': 'Sustainable Innovators',
+            'adventurers': 'Adventurers'
         };
+
+        function getBadgeLevel(badgeKey) {
+            if (badgeKey.endsWith(' i')) return { level: 'I', glowClass: 'badge-glow-i' };
+            if (badgeKey.endsWith(' ii')) return { level: 'II', glowClass: 'badge-glow-ii' };
+            if (badgeKey.endsWith(' iii')) return { level: 'III', glowClass: 'badge-glow-iii' };
+            return null;
+        }
+
+        function getBadgeBaseAndLevel(badgeKey) {
+            if (badgeKey.endsWith(' i')) return { base: badgeKey.slice(0, -2), level: 1 };
+            if (badgeKey.endsWith(' ii')) return { base: badgeKey.slice(0, -3), level: 2 };
+            if (badgeKey.endsWith(' iii')) return { base: badgeKey.slice(0, -4), level: 3 };
+            return { base: badgeKey, level: 0 };
+        }
 
         function parseTeams(csvText) {
             const lines = csvText.trim().split('\n');
-            if (lines.length < 2) return [];
+            if (lines.length < 3) return [];  // Need at least headers + 1 data row
 
             const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
             const teams = [];
 
-            for (let i = 1; i < lines.length; i++) {
+            for (let i = 2; i < lines.length; i++) {  // Start from row 3 (0-based index 2)
                 const parts = lines[i].split(',').map(p => p.trim());
                 if (parts.length < 2) continue;
 
@@ -581,12 +567,13 @@
 
                 const badges = [];
 
-                // Start from column index 2 (badge columns)
-                for (let j = 2; j < headers.length; j++) {
+                // Start from column index 4 (E column, 0-based)
+                for (let j = 4; j < headers.length; j++) {
                     const badgeKey = headers[j];
                     const value = parts[j];
 
                     if (value === "TRUE") {
+                        console.log(badgeKey);
                         badges.push({
                             imagePath: badgeImages[badgeKey] || 'Images/placeholder.png',
                             tooltip: badgeTooltips[badgeKey] || badgeKey,
@@ -610,12 +597,22 @@
 
             if (badges.length <= max) {
                 return badges
-                    .map(badge => `<span class="badge-wrapper" data-tooltip="${badge.tooltip}" onclick="event.stopPropagation()"><img class="badge ${badge.key}" src="${badge.imagePath}" alt="${badge.tooltip}" tabindex="0" onerror="this.src='https://placehold.co/32x32'"></span>`)
+                    .map(badge => {
+                        const levelInfo = getBadgeLevel(badge.key);
+                        const glowClass = levelInfo ? levelInfo.glowClass : '';
+                        const overlayText = levelInfo ? `<span class="badge-overlay">${levelInfo.level}</span>` : '';
+                        return `<span class="badge-wrapper" data-tooltip="${badge.tooltip}"><img class="badge ${badge.key} ${glowClass}" src="${badge.imagePath}" alt="${badge.tooltip}" tabindex="0" onerror="this.src='https://placehold.co/32x32'">${overlayText}</span>`;
+                    })
                     .join('');
             }
 
             const shown = badges.slice(0, max)
-                .map(badge => `<span class="badge-wrapper" data-tooltip="${badge.tooltip}" onclick="event.stopPropagation()"><img class="badge ${badge.key}" src="${badge.imagePath}" alt="${badge.tooltip}" tabindex="0" onerror="this.src='https://placehold.co/32x32'"></span>`)
+                .map(badge => {
+                    const levelInfo = getBadgeLevel(badge.key);
+                    const glowClass = levelInfo ? levelInfo.glowClass : '';
+                    const overlayText = levelInfo ? `<span class="badge-overlay">${levelInfo.level}</span>` : '';
+                    return `<span class="badge-wrapper" data-tooltip="${badge.tooltip}"><img class="badge ${badge.key} ${glowClass}" src="${badge.imagePath}" alt="${badge.tooltip}" tabindex="0" onerror="this.src='https://placehold.co/32x32'">${overlayText}</span>`;
+                })
                 .join('');
             const overflow = `<div class="badge-overflow">+${badges.length - max}</div>`;
             return shown + overflow;
@@ -629,20 +626,53 @@
             modalTitle.textContent = teamName;
             modalBadges.innerHTML = '';
             
-            // Get all available badge keys
-            const allBadgeKeys = Object.keys(badgeImages);
-            const earnedKeys = new Set(earnedBadges.map(b => b.key));
+            // Group earned badges by base name and find highest level
+            const earnedMap = new Map();
+            earnedBadges.forEach(badge => {
+                const { base, level } = getBadgeBaseAndLevel(badge.key);
+                if (!earnedMap.has(base) || earnedMap.get(base) < level) {
+                    earnedMap.set(base, level);
+                }
+            });
             
-            // Create badge items for all badges
-            allBadgeKeys.forEach(badgeKey => {
-                const isEarned = earnedKeys.has(badgeKey);
+            // Get all unique base badge keys
+            const allBaseKeys = new Set();
+            Object.keys(badgeImages).forEach(key => {
+                const { base } = getBadgeBaseAndLevel(key);
+                allBaseKeys.add(base);
+            });
+            
+            // Create badge items for each base badge
+            Array.from(allBaseKeys).sort().forEach(baseKey => {
+                const earnedLevel = earnedMap.get(baseKey) || 0;
+                const isEarned = earnedMap.has(baseKey);
+                
+                // Find the image path (use level 1 for tiered badges, or the base for non-tiered)
+                let imageKey = baseKey;
+                if (earnedLevel > 0) {
+                    // For earned tiered badges, use the specific level key for image
+                    if (earnedLevel === 1) imageKey = baseKey + ' i';
+                    else if (earnedLevel === 2) imageKey = baseKey + ' ii';
+                    else if (earnedLevel === 3) imageKey = baseKey + ' iii';
+                } else {
+                    // For unearned, check if it's a tiered badge and use level 1
+                    if (badgeImages[baseKey + ' i']) imageKey = baseKey + ' i';
+                }
+                
+                const levelInfo = earnedLevel > 0 ? { level: earnedLevel === 1 ? 'I' : earnedLevel === 2 ? 'II' : 'III', glowClass: earnedLevel === 1 ? 'badge-glow-i' : earnedLevel === 2 ? 'badge-glow-ii' : 'badge-glow-iii' } : null;
+                const glowClass = levelInfo ? levelInfo.glowClass : '';
+                const overlayText = levelInfo ? `<span class="modal-badge-overlay">${levelInfo.level}</span>` : '';
+                
                 const badgeItem = document.createElement('div');
                 badgeItem.className = `modal-badge-item ${isEarned ? 'earned' : 'unearned'}`;
                 
                 const imgClass = isEarned ? 'earned' : 'unearned';
                 badgeItem.innerHTML = `
-                    <img class="modal-badge-img ${imgClass}" src="${badgeImages[badgeKey]}" alt="${badgeTooltips[badgeKey]}" onerror="this.src='https://placehold.co/70x70'">
-                    <div class="modal-badge-label">${badgeTooltips[badgeKey]}</div>
+                    <div class="modal-badge-img-container">
+                        <img class="modal-badge-img ${imgClass} ${glowClass}" src="${badgeImages[imageKey]}" alt="${badgeTooltips[baseKey] || baseKey}" onerror="this.src='https://placehold.co/70x70'">
+                        ${overlayText}
+                    </div>
+                    <div class="modal-badge-label">${badgeTooltips[baseKey] || baseKey}</div>
                 `;
                 
                 modalBadges.appendChild(badgeItem);
@@ -654,16 +684,6 @@
         function closeBadgeModal() {
             const modal = document.getElementById('badgeModal');
             modal.classList.remove('active');
-        }
-
-        function shuffleArray(array) {
-            // Fisher-Yates shuffle algorithm
-            const shuffled = [...array];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled;
         }
 
         function renderLeaderboard(teams) {
@@ -722,9 +742,7 @@
                 const listContainer = document.createElement('div');
                 listContainer.style.borderRadius = '0 0 15px 15px';
                 
-                // Randomize the order of non-podium teams
-                const shuffledTeams = shuffleArray(teams.slice(3));
-                shuffledTeams.forEach((team, index) => {
+                teams.slice(3).forEach((team, index) => {
                     const rank = index + 4;
                     const item = document.createElement('div');
                     item.className = 'leaderboard-item';
@@ -738,10 +756,10 @@
                             <div class="badges">${badgesHTML}</div>
                         </div>
                         <div class="score">
-                            ?
+                            ${team.score.toLocaleString()}
                             <span class="score-label">WET</span>
                         </div>
-                    `; // replace ? by ${team.score.toLocaleString()}
+                    `;
 
                     item.addEventListener('click', () => showBadgeModal(team.name, team.badges));
                     listContainer.appendChild(item);
