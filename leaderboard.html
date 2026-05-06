@@ -915,6 +915,14 @@
             });
         }
 
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
         function renderLeaderboard(teams) {
             const leaderboard = document.getElementById('leaderboard');
             leaderboard.innerHTML = '';
@@ -971,7 +979,8 @@
                 const listContainer = document.createElement('div');
                 listContainer.style.borderRadius = '0 0 15px 15px';
                 
-                teams.slice(3).forEach((team, index) => {
+                const remainingTeams = shuffleArray(teams.slice(3));
+                remainingTeams.forEach((team, index) => {
                     const rank = index + 4;
                     const item = document.createElement('div');
                     item.className = 'leaderboard-item';
