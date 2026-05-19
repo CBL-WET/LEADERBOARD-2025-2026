@@ -271,6 +271,35 @@
             flex-direction: column;
             align-items: center;
             gap: 8px;
+            position: relative;
+        }
+
+        .modal-badge-tooltip {
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translateX(-50%);
+            background: rgba(40, 50, 70, 0.95);
+            color: #e8eef5;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            white-space: normal;
+            max-width: 320px;
+            width: min(320px, calc(100vw - 32px));
+            text-align: center;
+            z-index: 10000;
+            border: 1px solid rgba(180, 190, 220, 0.2);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+            pointer-events: none;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+        }
+
+        .modal-badge-tooltip.visible {
+            opacity: 1;
+            visibility: visible;
         }
 
         .modal-badge-img {
@@ -453,7 +482,7 @@
         }
 
         .badge-glow-i {
-            filter: drop-shadow(0 0 12px rgba(205, 127, 50, 1.0)); /* bronze glow */
+            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 1.0)); /* gold glow */
         }
 
         .badge-glow-ii {
@@ -461,7 +490,7 @@
         }
 
         .badge-glow-iii {
-            filter: drop-shadow(0 0 12px rgba(255, 215, 0, 1.0)); /* gold glow */
+            filter: drop-shadow(0 0 12px rgba(205, 127, 50, 1.0)); /* bronze glow */
         }
 
         .badge-overlay {
@@ -630,6 +659,8 @@
             </div>
         </div>
 
+        <div id="modalBadgeTooltip" class="modal-badge-tooltip" aria-hidden="true"></div>
+
         <div class="last-updated">
             Last updated: <span id="timestamp"></span>
         </div>
@@ -653,6 +684,7 @@
 
         let loggedInTeam = null;
         let teamPasswords = new Map();
+        let activeModalTooltipTarget = null;
 
         // Badge image mapping (from Google Sheet)
         const badgeImages = {
@@ -695,6 +727,22 @@
             'high roller': 'High Roller',
             'sustainable innovators': 'Sustainable Innovators',
             'adventurers': 'Adventurers'
+        };
+
+        const badgeDescriptions = {
+            'warranty voider': 'Re-purpose a 10WET-token as a microcontroller together with the programmer module. Show it working as a part of your system.',
+            'wet with wet': 'Awarded for using 1 or 5 WET (or both) as part of a wireless energy transfer system.',
+            'the golden tome': 'Awarded to teams that attended all 7 workshops, and received a token for it.',
+            'outstanding solution award': 'Most creative / most valuable / most impactful solution to a problem (CBL).',
+            'golden trace': 'Awarded for the best PCB design.',
+            'design harmony': 'Best system integration: nice coil mounting, good integration of the PCBs, proper cabling, etc.',
+            'sweet spot seeker': 'Awarded for achieving MPPT during the final demonstration.',
+            'load detection specialists': 'Awarded for achieving load-detection during the final demonstration.',
+            'sharpshooters': 'Awarded for the best accuracy in predictions versus measurements during the demonstration.',
+            'top earner': 'Awarded to the team that earned the most WET-value in tokens so far.',
+            'high roller': 'Awarded to the team that spent the most WET-value in tokens so far.',
+            'sustainable innovators': 'Awarded to the team(s) with the best sustainable implementation to their CBL problem.',
+            'adventurers': 'Awarded to the team(s) that have completed the most quests.'
         };
 
         function getBadgeLevel(badgeKey) {
@@ -794,6 +842,50 @@
             return shown + overflow;
         }
 
+        function getModalBadgeTooltip() {
+            return document.getElementById('modalBadgeTooltip');
+        }
+
+        function showModalBadgeTooltip(target, text) {
+            const tooltip = getModalBadgeTooltip();
+            if (!tooltip || !text) return;
+            activeModalTooltipTarget = target;
+            tooltip.textContent = text;
+            const rect = target.getBoundingClientRect();
+            
+            if (window.innerWidth < 768) {
+                tooltip.style.left = '50%';
+                tooltip.style.transform = 'translateX(-50%)';
+                tooltip.style.top = '12px';
+            } else {
+                const centerX = rect.left + rect.width / 2;
+                const minX = 16;
+                const maxX = window.innerWidth - 16;
+                const left = Math.min(Math.max(centerX, minX), maxX);
+                tooltip.style.left = `${left}px`;
+                tooltip.style.transform = 'translateX(-50%)';
+                tooltip.style.top = `${Math.max(12, rect.top - tooltip.offsetHeight - 10)}px`;
+            }
+            tooltip.classList.add('visible');
+        }
+
+        function toggleModalBadgeTooltip(target, text) {
+            const tooltip = getModalBadgeTooltip();
+            if (!tooltip || !text) return;
+            if (tooltip.classList.contains('visible') && activeModalTooltipTarget === target) {
+                hideModalBadgeTooltip();
+            } else {
+                showModalBadgeTooltip(target, text);
+            }
+        }
+
+        function hideModalBadgeTooltip() {
+            const tooltip = getModalBadgeTooltip();
+            if (!tooltip) return;
+            tooltip.classList.remove('visible');
+            activeModalTooltipTarget = null;
+        }
+
         function showBadgeModal(teamName, earnedBadges) {
             const modal = document.getElementById('badgeModal');
             const modalTitle = document.getElementById('modalTitle');
@@ -839,8 +931,10 @@
                 const glowClass = levelInfo ? levelInfo.glowClass : '';
                 const overlayText = levelInfo ? `<span class="modal-badge-overlay">${levelInfo.level}</span>` : '';
                 
+                const description = badgeDescriptions[baseKey] || 'No description available.';
                 const badgeItem = document.createElement('div');
                 badgeItem.className = `modal-badge-item ${isEarned ? 'earned' : 'unearned'}`;
+                badgeItem.setAttribute('data-tooltip', description);
                 
                 const imgClass = isEarned ? 'earned' : 'unearned';
                 badgeItem.innerHTML = `
@@ -850,6 +944,24 @@
                     </div>
                     <div class="modal-badge-label">${badgeTooltips[baseKey] || baseKey}</div>
                 `;
+                badgeItem.addEventListener('pointerenter', e => {
+                    if (e.pointerType !== 'touch') {
+                        showModalBadgeTooltip(badgeItem, description);
+                    }
+                });
+                badgeItem.addEventListener('pointerleave', e => {
+                    if (e.pointerType !== 'touch') {
+                        hideModalBadgeTooltip();
+                    }
+                });
+                badgeItem.addEventListener('focusin', () => showModalBadgeTooltip(badgeItem, description));
+                badgeItem.addEventListener('focusout', hideModalBadgeTooltip);
+                badgeItem.addEventListener('pointerdown', e => {
+                    if (e.pointerType === 'touch' || window.innerWidth < 768) {
+                        e.preventDefault();
+                        toggleModalBadgeTooltip(badgeItem, description);
+                    }
+                });
                 
                 modalBadges.appendChild(badgeItem);
             });
@@ -871,6 +983,7 @@
         function closeBadgeModal() {
             const modal = document.getElementById('badgeModal');
             modal.classList.remove('active');
+            hideModalBadgeTooltip();
         }
 
         function closeLoginModal() {
